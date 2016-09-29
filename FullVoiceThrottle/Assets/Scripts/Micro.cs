@@ -93,6 +93,25 @@ public class Micro : MonoBehaviour {
 			inputDevices [i] = Microphone.devices [i].ToString ();
 			Debug.Log("Device: " + inputDevices [i]);
 		}
+
+		if (deviceNum >= Microphone.devices.Length)
+		{
+			Vehicle[] motos = FindObjectsOfType<Vehicle>();
+
+			foreach (Vehicle mot in motos)
+			{
+				if (mot != this)
+				{
+					mot.transform.FindChild("Main Camera").GetComponent<Camera>().rect = new Rect(0f,0f,1f,1f);
+				}
+			}
+
+			Destroy(gameObject);
+			Destroy(animAiguille.transform.parent.parent.gameObject);
+
+			return;
+		}
+
 		CurrentAudioInput = Microphone.devices[deviceNum].ToString();
 		StartMic ();
 		octaveCalibration = new float[GetIdFromFreq(3200)];

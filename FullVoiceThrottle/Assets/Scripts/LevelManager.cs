@@ -12,13 +12,13 @@ public class LevelManager : MonoBehaviour {
 
 	public float arrivalLimit = -2000f;
 
-	public Vehicle[] motos;
+	public List<Vehicle> motos;
 
 	public bool alreadyWin = false;
 
 	// Use this for initialization
 	void Start () {
-		motos = FindObjectsOfType<Vehicle>();
+		motos = new List<Vehicle>(FindObjectsOfType<Vehicle>());
 	}
 
 	// Update is called once per frame
@@ -30,7 +30,16 @@ public class LevelManager : MonoBehaviour {
 
 		float timeLevel = Time.timeSinceLevelLoad * 0.5f;
 
-		for (int i=0; i<motos.Length; i++)
+		for (int i=0; i<motos.Count; i++)
+		{
+			if (motos[i] == null)
+			{
+				motos.RemoveAt(i);
+				break;
+			}
+		}
+
+		for (int i=0; i<motos.Count; i++)
 		{
 			if (motos[i].gameObject.transform.position.x < arrivalLimit && motos[i].Win_GO.activeSelf == false &&  motos[i].Loose_GO.activeSelf == false)
 			{
