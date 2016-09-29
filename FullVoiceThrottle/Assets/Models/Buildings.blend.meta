@@ -1,0 +1,165 @@
+fileFormatVersion: 2
+guid: 0afa947adfe000d439d00f5204b01509
+timeCreated: 1474753234
+licenseType: Free
+ModelImporter:
+  serializedVersion: 19
+  fileIDToRecycleName:
+    100000: BuildingDeMerde
+    100002: //RootNode
+    100004: Escalator
+    100006: Pont
+    100008: PontDiag
+    100010: PontPetit
+    100012: Pontpetit2
+    100014: PontPetitDiag
+    100016: pyramide
+    100018: RoadCorner
+    100020: RoadDroit
+    100022: StreetLight
+    100024: StreetlightCorner
+    100026: TourBoite
+    100028: tourHaute
+    100030: TourSpaceship
+    100032: TourTordu
+    100034: TrustTetra
+    100036: TyrellBuilding
+    400000: BuildingDeMerde
+    400002: //RootNode
+    400004: Escalator
+    400006: Pont
+    400008: PontDiag
+    400010: PontPetit
+    400012: Pontpetit2
+    400014: PontPetitDiag
+    400016: pyramide
+    400018: RoadCorner
+    400020: RoadDroit
+    400022: StreetLight
+    400024: StreetlightCorner
+    400026: TourBoite
+    400028: tourHaute
+    400030: TourSpaceship
+    400032: TourTordu
+    400034: TrustTetra
+    400036: TyrellBuilding
+    2300000: BuildingDeMerde
+    2300002: Escalator
+    2300004: Pont
+    2300006: PontDiag
+    2300008: PontPetit
+    2300010: Pontpetit2
+    2300012: PontPetitDiag
+    2300014: pyramide
+    2300016: RoadCorner
+    2300018: RoadDroit
+    2300020: StreetLight
+    2300022: StreetlightCorner
+    2300024: TourBoite
+    2300026: tourHaute
+    2300028: TourSpaceship
+    2300030: TourTordu
+    2300032: TrustTetra
+    2300034: TyrellBuilding
+    3300000: BuildingDeMerde
+    3300002: Escalator
+    3300004: Pont
+    3300006: PontDiag
+    3300008: PontPetit
+    3300010: Pontpetit2
+    3300012: PontPetitDiag
+    3300014: pyramide
+    3300016: RoadCorner
+    3300018: RoadDroit
+    3300020: StreetLight
+    3300022: StreetlightCorner
+    3300024: TourBoite
+    3300026: tourHaute
+    3300028: TourSpaceship
+    3300030: TourTordu
+    3300032: TrustTetra
+    3300034: TyrellBuilding
+    4300000: TrustTetra
+    4300002: tourHaute
+    4300004: Escalator
+    4300006: StreetLight
+    4300008: StreetlightCorner
+    4300010: TyrellBuilding
+    4300012: pyramide
+    4300014: RoadCorner
+    4300016: RoadDroit
+    4300018: TourTordu
+    4300020: PontPetitDiag
+    4300022: Pontpetit2
+    4300024: PontPetit
+    4300026: PontDiag
+    4300028: Pont
+    4300030: BuildingDeMerde
+    4300032: TourSpaceship
+    4300034: TourBoite
+    7400000: Default Take
+    9500000: //RootNode
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 0
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

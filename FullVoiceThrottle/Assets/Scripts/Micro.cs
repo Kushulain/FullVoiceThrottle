@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Micro : MonoBehaviour {
 //
@@ -31,6 +32,7 @@ public class Micro : MonoBehaviour {
 	public float signalPow = 8f;
 	public float signalMul = 8f;
 	public Image jauge;
+	public Animation animAiguille;
 
 	public CoolDownEvent smoothDelay = new CoolDownEvent(0.1f);
 	public int[] lastFreqs;
@@ -38,6 +40,7 @@ public class Micro : MonoBehaviour {
 	int freqSamplesCounter = 0;
 	public float smoothedFreq = 2;
 
+	bool calibDone = false;
 	float[] octaveCalibration;
 	public float thresholdFreq = 0f;
 	public float octaveTotalCalibrationThreshold = 0f;
@@ -45,7 +48,8 @@ public class Micro : MonoBehaviour {
 	public float audibleFreqSpeed = 2f;
 	public float audibleFreq = 0f;
 
-	public float relativeFreq = 0f;
+	public float finalFreq = 0f;
+	public float lastKnownFreqLerp = 0f;
 	public float lastKnownFreq = 0f;
 	public float freqBegin = 0f;
 
@@ -60,8 +64,25 @@ public class Micro : MonoBehaviour {
 
 	public float userFreqSpeed = 30f;
 
+	public float freqPercent = 0f;
+
+	public float[] shortSpectrum;
+
+	public bool lastAudible = false;
+
+	public float shiftDebug = -50f;
+	public float multDebug = 2f;
+
+	public Transform cam;
+
+	public KeyCode sensivityDown = KeyCode.I;
+	public KeyCode sensivityUp = KeyCode.O;
+	public float sensivityShiftUI = 0f;
+
+
 	void Start()
 	{
+		animAiguille["Aiguille"].speed = 0f;
 		userCurrentMinFreq = userMinFreqDefaultValue;
 		userCurrentMaxFreq = userMaxFreqDefaultValue;
 
@@ -80,16 +101,25 @@ public class Micro : MonoBehaviour {
 
 
 	public void StartMic(){
-		audioSauce.clip = Microphone.Start(CurrentAudioInput, true, 1, (int) sampleFreq); 
+		audioSauce.clip = Microphone.Start(CurrentAudioInput, true, 8, (int) sampleFreq); 
 	}
 
 	public void OnGUI(){
-		GUI.Label (new Rect (10, 10, 400, 400), CurrentAudioInput);
+//		GUI.Label (new Rect (10, 10, 400, 400), CurrentAudioInput);
+		GUI.Label (new Rect (10, 10 + sensivityShiftUI * Screen.height, 400, 400), thresholdFreq.ToString());
 	}
 
 
 
 	void Update() {
+		if (Input.GetKeyDown(sensivityUp))
+		{
+			thresholdFreq += 0.0025f;
+		}
+		if (Input.GetKeyDown(sensivityDown))
+		{
+			thresholdFreq -= 0.0025f;
+		}
 //		if (Input.GetKeyDown(KeyCode.E))
 //		{
 //			Microphone.End (CurrentAudioInput);
@@ -113,13 +143,13 @@ public class Micro : MonoBehaviour {
 		}
 		audioSauce.GetSpectrumData(spectrum, 0, FFTType);
 
-		float[] shortSpectrum = new float[GetIdFromFreq(3200)];
+		shortSpectrum = new float[GetIdFromFreq(3200)];
 		System.Array.Copy(spectrum,shortSpectrum,GetIdFromFreq(3200));
 
 		//float[] octaveValues = WrapOctave(shortSpectrum);
 
 
-		if (Input.GetKeyDown (KeyCode.A)) {
+		if (Input.GetKeyDown (KeyCode.A) || (!calibDone && Time.timeSinceLevelLoad > 1f)) {
 			SetCalibration(shortSpectrum);
 
 			userCurrentMinFreq = userMinFreqDefaultValue;
@@ -135,15 +165,78 @@ public class Micro : MonoBehaviour {
 
 //		spectrum = WrapOctave(shortSpectrum);
 
+
+		//si on sort d'un audible < 1f alors peak le plus bas
+		//sinon peak le plush proche du dernier
+
+
 //		int highestFFT = GetHighestPeak(shortSpectrum);
-		int highest = GetHighestPeak(shortSpectrum);
-		int secondHighest = GetHighestPeak(shortSpectrum,shortSpectrum[highest],highest-4,highest+4);
+		HashSet<int> forbiddens = new HashSet<int>();
+		int forbidRadius = 8;
+
+		int highest = GetHighestPeak(shortSpectrum,forbiddens);
+		for (int i=0; i<forbidRadius; i++)
+		{
+			int k = highest+i-(forbidRadius/2);
+			if (!forbiddens.Contains(k))
+				forbiddens.Add(k);
+		}
+
+		int secondHighest = GetHighestPeak(shortSpectrum,forbiddens);
+		for (int i=0; i<forbidRadius; i++)
+		{
+			int k = secondHighest+i-(forbidRadius/2);
+			if (!forbiddens.Contains(k))
+				forbiddens.Add(k);
+		}
+		
+		int thirdHighest = GetHighestPeak(shortSpectrum,forbiddens);
+
 		int results = highest;
 
-		if (Mathf.Abs(highest-lastKnownFreq) > Mathf.Abs(secondHighest-lastKnownFreq))
+
+//		if (secondHighest < highest && (shortSpectrum[secondHighest] / shortSpectrum[highest]) > 0.4f)
+//			results = secondHighest;
+
+		if (!lastAudible || true)
 		{
-			results = secondHighest;
+			if (secondHighest < highest && (shortSpectrum[secondHighest] / shortSpectrum[highest]) > 0.3f)
+				results = secondHighest;
+			
+			if (thirdHighest < secondHighest && (shortSpectrum[thirdHighest] / shortSpectrum[highest]) > 0.3f)
+				results = thirdHighest;
 		}
+		else
+		{
+			float hiDist = Mathf.Abs(highest-lastKnownFreq);
+			float hiDist2 = Mathf.Abs(secondHighest-lastKnownFreq);
+			float hiDist3 = Mathf.Abs(thirdHighest-lastKnownFreq);
+
+			if (hiDist < hiDist2 && hiDist < hiDist3)
+			{
+				results = highest;
+			}
+			else if (hiDist2 < hiDist3 && hiDist2 < hiDist)
+			{
+				results = secondHighest;
+			}
+			else
+			{
+				results = thirdHighest;
+			}
+		}
+
+
+
+//		int results = Mathf.Min(highest,secondHighest);
+
+//		if (Mathf.Abs(highest-lastKnownFreq) > Mathf.Abs(secondHighest-lastKnownFreq) && lastAudible)
+//		{
+//			results = secondHighest;
+//		}
+//		else
+//		{
+//		}
 
 
 //		float dist = Mathf.Abs((float)(highest-secondHighest));
@@ -188,17 +281,17 @@ public class Micro : MonoBehaviour {
 //		Debug.Log("results : " + results);
 		ProcessFreq(results);
 		//jauge.fillAmount = 0.5f  * (relativeFreq)/octavePrecision;
-		jauge.fillAmount = 0.6f * ((lastKnownFreq-userCurrentMinFreq) / (userCurrentMaxFreq-userCurrentMinFreq));
 
-
+		freqPercent = ((finalFreq-userCurrentMinFreq) / (userCurrentMaxFreq-userCurrentMinFreq));
+		UpdateSpeedometer(freqPercent);
 
 
 //		totalFreq /= octaveValues.Length;
 
 //		Debug.Log(octaveValues[highest] + " / " + totalFreq + " = " + octaveValues[highest]/totalFreq);
-		Debug.Log("Calibration : " + totalFreq);
+//		Debug.Log("Calibration : " + totalFreq);
 
-		if (/*octaveValues[highest]/totalFreq > thresholdFreq*/ totalFreq > octaveTotalCalibrationThreshold )
+		if (shortSpectrum[highest]/totalFreq > thresholdFreq/* totalFreq > octaveTotalCalibrationThreshold */)
 		{
 			audibleFreq += Time.deltaTime * audibleFreqSpeed;
 		}
@@ -209,20 +302,34 @@ public class Micro : MonoBehaviour {
 
 		audibleFreq = Mathf.Clamp01(audibleFreq);
 
-		for (int i=1; i<shortSpectrum.Length; i++)
+		for (int i=10; i<shortSpectrum.Length; i++)
 		{
+//			float value = shortSpectrum[i];
+//			float bassFilter = 2f / (i+1f) + 1;
+//			value /= bassFilter;
 //			if (Mathf.FloorToInt(Mathf.Log(GetFreqFromId(i),2f)) == 0)
 			//				Debug.DrawLine(new Vector3(i, -50f, 0f),new Vector3(i, 0f, 0),Color.blue);
 			if (highest == i)
-				Debug.DrawLine(new Vector3(i, -20, 0f),new Vector3(i, 50f, 0),Color.red);
+				Debug.DrawLine((new Vector3(i, shiftDebug, 0f)),
+					(new Vector3(i, 50f + shiftDebug, 0)),new Color(1f,1f,0.66f,0.2f),0.2f);
 			if (secondHighest == i)
-				Debug.DrawLine(new Vector3(i, -20, 0f),new Vector3(i, 50f, 0),Color.yellow);
+				Debug.DrawLine((new Vector3(i, shiftDebug, 0f)),
+					(new Vector3(i, 50f + shiftDebug, 0)),new Color(1f,1f,0.333f,0.2f),0.2f);
+			if (thirdHighest == i)
+				Debug.DrawLine((new Vector3(i, shiftDebug, 0f)),
+					(new Vector3(i, 50f + shiftDebug, 0)),new Color(1f,1f,0.0f,0.2f),0.2f);
 			if (results == i)
-				Debug.DrawLine(new Vector3(i, -20, 0f),new Vector3(i, 50f, 0),Color.green);
+				Debug.DrawLine((new Vector3(i, shiftDebug, 0f)),
+					(new Vector3(i, 50f + shiftDebug, 0)),new Color(0f,1f,0f,0.5f),0.2f);
+			if ((int)lastKnownFreqLerp == i)
+				Debug.DrawLine((new Vector3(i, shiftDebug, 0f)),
+					(new Vector3(i, 50f + shiftDebug, 0)),new Color(0f,0f,1f,0.5f),0.2f);
 
-			Debug.DrawLine( new Vector3(i - 1, 100f * shortSpectrum[i - 1] -50f , 0), 
-				new Vector3(i, 100f * shortSpectrum[i] -50f , 0), 
+			Debug.DrawLine((new Vector3(i - 1, multDebug * 200f * shortSpectrum[i - 1] + shiftDebug , 0)), 
+				(new Vector3(i, multDebug * 200f * shortSpectrum[i] + shiftDebug , 0)), 
 				Color.magenta);
+
+
 		}
 
 //		Debug.DrawLine(new Vector3((lastKnownFreq+octavePrecision*40f)%octavePrecision, -30, 0f),new Vector3((lastKnownFreq+octavePrecision*40f)%octavePrecision, 50f, 0),Color.yellow);
@@ -246,7 +353,20 @@ public class Micro : MonoBehaviour {
 //				new Vector3(i, 50f * octaveValues[i] , 0), 
 //				Color.red);
 //		}
+
+		lastKnownFreq = results;
+		lastAudible = audibleFreq == 1f;
 	}
+
+	void UpdateSpeedometer(float percentage)
+	{
+		percentage = ((finalFreq-userCurrentMinFreq) / (userCurrentMaxFreq-userCurrentMinFreq));
+		percentage = Mathf.Clamp01(percentage);
+
+//		Debug.Log(percentage);
+		animAiguille["Aiguille"].normalizedTime = percentage;
+	}
+
 
 	void ProcessFreq(float curFreq)
 	{
@@ -275,27 +395,27 @@ public class Micro : MonoBehaviour {
 //			delta = (curFreq+octavePrecision)-((lastKnownFreq+octavePrecision*100f)%octavePrecision);
 //		}
 
-		float delta = curFreq-lastKnownFreq;
-		float finalDelta = Mathf.Lerp(0f,delta,Time.deltaTime * 8f);
-		lastKnownFreq += finalDelta;
+		float delta = curFreq-lastKnownFreqLerp;
+		float finalDelta = Mathf.Lerp(0f,delta,Time.deltaTime * 7f / Mathf.Min(10f,(1f+Mathf.Abs(curFreq-lastKnownFreq))));
+		lastKnownFreqLerp += finalDelta;
 
 //		if (audibleFreq < 1.0f)
 //		{
 //			freqBegin = lastKnownFreq;
 //		}
-		if (audibleFreq == 1f)
+		if (audibleFreq == 1f/* && lastKnownFreq > userMinFreqDefaultAllowed*/)
 		{
 			//userFreqSpeed = 
 
-			if (lastKnownFreq < userCurrentMinFreq)
+			if (lastKnownFreqLerp < userCurrentMinFreq)
 			{
 				userCurrentMinFreq -= userFreqSpeed * Time.deltaTime;
-				userCurrentMinFreq = Mathf.Max(userCurrentMinFreq,lastKnownFreq);
+				userCurrentMinFreq = Mathf.Max(userCurrentMinFreq,lastKnownFreqLerp);
 			}
-			if (lastKnownFreq > userCurrentMaxFreq)
+			if (lastKnownFreqLerp > userCurrentMaxFreq)
 			{
 				userCurrentMaxFreq += userFreqSpeed * Time.deltaTime;
-				userCurrentMaxFreq = Mathf.Min(userCurrentMaxFreq,lastKnownFreq);
+				userCurrentMaxFreq = Mathf.Min(userCurrentMaxFreq,lastKnownFreqLerp);
 			}
 
 //			userCurrentMaxFreq -= userFreqSpeed * Time.deltaTime * 0.01f;
@@ -307,18 +427,19 @@ public class Micro : MonoBehaviour {
 			userCurrentMinFreq = Mathf.Max(userCurrentMinFreq,userMinFreqDefaultAllowed);
 			userCurrentMaxFreq = Mathf.Min(userCurrentMaxFreq,userMaxFreqDefaultAllowed);
 
-			relativeFreq += finalDelta;
+			finalFreq = lastKnownFreqLerp;
 		}
-		else if (audibleFreq == 0f)
-		{
-			relativeFreq += ((-relativeFreq)/* > 0f ? 1f : -1f*/) * Time.deltaTime * (1f-audibleFreq) * 2f;
-		}
+//		else if (audibleFreq == 0f)
+//		{
+//			relativeFreq += ((-relativeFreq)/* > 0f ? 1f : -1f*/) * Time.deltaTime * (1f-audibleFreq) * 2f;
+//		}
 		//lastKnownFreq += way * audibleFreq * Time.deltaTime;
 	}
 
 	void SetCalibration(float[] curOctave)
 	{
 		System.Array.Copy(curOctave,octaveCalibration,curOctave.Length);
+		calibDone = true;
 	}
 
 	float GetFreqFromId(int id)
@@ -338,17 +459,23 @@ public class Micro : MonoBehaviour {
 		return (int)hz;
 	}
 
-	int GetHighestPeak(float[] octaveSpect, float highest = float.PositiveInfinity, int forbidMin = -1, int forbidMax = -1)
+	int GetHighestPeak(float[] octaveSpect, HashSet<int> forbiddens, float highest = float.PositiveInfinity)
 	{
-		int bestId = 0;
-		for (int i=0; i<octaveSpect.Length; i++)
+		int bestId = octaveSpect.Length-1;
+//		float bassFilter = 0f;
+
+		for (int i=10; i<octaveSpect.Length; i++)
 		{
-			if (i > forbidMin && i < forbidMax)
+			if (forbiddens.Contains(i))
 				continue;
 
-			if (octaveSpect[i] < highest)
+			float value = octaveSpect[i];
+//			bassFilter = 2f / (i+1f) + 1;
+//			value /= bassFilter;
+			// / bassFilter
+			if (value  < highest)
 			{
-				if (octaveSpect[i] > octaveSpect[bestId])
+				if (value > octaveSpect[bestId])
 				{
 					bestId = i;
 				}
