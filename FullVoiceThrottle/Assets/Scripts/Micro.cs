@@ -79,6 +79,10 @@ public class Micro : MonoBehaviour {
 	public KeyCode sensivityUp = KeyCode.O;
 	public float sensivityShiftUI = 0f;
 
+	int frameSinceStartCounter = -1;
+
+	float automaticCalibration = float.PositiveInfinity;
+
 
 	void Start()
 	{
@@ -156,10 +160,15 @@ public class Micro : MonoBehaviour {
 		if (microphoneSamples / sampleFreq > delay) {
 			if (!audioSauce.isPlaying) {
 				Debug.Log ("Starting thing");
+				frameSinceStartCounter = 1;
 				audioSauce.timeSamples = (int) (microphoneSamples - (delay * sampleFreq));
 				audioSauce.Play ();
 			}
 		}
+
+		if (frameSinceStartCounter >= 0)
+			frameSinceStartCounter++;
+		
 		audioSauce.GetSpectrumData(spectrum, 0, FFTType);
 
 		shortSpectrum = new float[GetIdFromFreq(3200)];
@@ -167,8 +176,25 @@ public class Micro : MonoBehaviour {
 
 		//float[] octaveValues = WrapOctave(shortSpectrum);
 
+		if (Time.timeSinceLevelLoad < 6f && Time.timeSinceLevelLoad > 2.5f)
+		{
+			float totalFreqPreCal = 0f;
+			for (int i=0; i<shortSpectrum.Length; i++)
+			{
+				totalFreqPreCal += shortSpectrum[i];
+			}
+//			Debug.Log("totalFreqPreCal = " + totalFreqPreCal);
 
-		if (Input.GetKeyDown (KeyCode.A) || (!calibDone && Time.timeSinceLevelLoad > 1f)) {
+			if (totalFreqPreCal < automaticCalibration && totalFreqPreCal != 0f)
+			{
+				Debug.Log("automatic Cal : " + totalFreqPreCal);
+				SetCalibration(shortSpectrum);
+				automaticCalibration = totalFreqPreCal;
+			}
+		}
+
+
+		if (Input.GetKeyDown (KeyCode.A)) {
 			SetCalibration(shortSpectrum);
 
 			userCurrentMinFreq = userMinFreqDefaultValue;

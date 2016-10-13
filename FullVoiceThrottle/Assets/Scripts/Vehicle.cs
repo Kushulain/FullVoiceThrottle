@@ -120,6 +120,7 @@ public class Vehicle : MonoBehaviour {
 	public GameObject Loose_GO;
 	public Text Win_GO_Text;
 	public Text Loose_GO_Text;
+	public Animation animArrow;
 	// Use this for initialization
 	void Start () {
 
@@ -127,6 +128,7 @@ public class Vehicle : MonoBehaviour {
 //		enginAudio.Add (GetComponents<AudioSource> () [1]);
 
 
+		animArrow["Aiguille"].speed = 0f;
 		animAiguille["Aiguille"].speed = 0f;
 //		animAiguille["Aiguille"].speed = 0f;
 		mic = GetComponent<Micro>();
@@ -330,6 +332,8 @@ public class Vehicle : MonoBehaviour {
 		curGearMax.fillAmount = 0.028f +  0.625f * (motorRPM/maxWantedRPM + tolerance);
 		curGearMin.fillAmount = 0.028f +  0.625f * motorRPM/maxWantedRPM;
 
+		animArrow["Aiguille"].normalizedTime = (motorRPM/maxWantedRPM + tolerance * 0.8f);
+
 
 		if (currentGear > 2 && currentGear < (gears.Count))
 			prevGearMax.fillAmount = 0.028f + 0.625f * prevGearThresholdMax;
@@ -374,7 +378,12 @@ public class Vehicle : MonoBehaviour {
 		}
 //		Debug.Log(gearDownAllowed + " + " + (mic.freqPercent < prevGearThresholdMax) );
 
-		if (Time.timeSinceLevelLoad > 8f && gearUpAllowed && (motorRPM/maxWantedRPM + tolerance*1.5f) > nextGearThresholdMin && 
+		if (Time.timeSinceLevelLoad > 6f && gearUpAllowed && (motorRPM/maxWantedRPM + tolerance) > nextGearThresholdMin)
+		{
+			animArrow["Aiguille"].normalizedTime = nextGearThresholdMin * 0.5f;
+		}
+
+		if (Time.timeSinceLevelLoad > 6f && gearUpAllowed && (motorRPM/maxWantedRPM + tolerance*1.5f) > nextGearThresholdMin && 
 			(mic.freqPercent < (motorRPM/maxWantedRPM - 0.04f) || (mic.audibleFreq < 1f && mic.lastAudible)))
 		{
 			gearUpAllowed = false;
@@ -385,7 +394,7 @@ public class Vehicle : MonoBehaviour {
 		}
 
 
-		if (Time.timeSinceLevelLoad > 8f && gearDownAllowed && (motorRPM/maxWantedRPM) < prevGearThresholdMax && 
+		if (Time.timeSinceLevelLoad > 6f && gearDownAllowed && (motorRPM/maxWantedRPM) < prevGearThresholdMax && 
 			(mic.freqPercent > (motorRPM/maxWantedRPM + 0.15f) && mic.freqPercent > prevGearThresholdMax))
 		{
 			gearUpAllowed = false;

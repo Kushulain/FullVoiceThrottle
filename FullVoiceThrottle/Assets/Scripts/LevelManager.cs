@@ -46,19 +46,19 @@ public class LevelManager : MonoBehaviour {
 				if (!alreadyWin)
 				{
 					motos[i].Win_GO.SetActive(true);
-					motos[i].Win_GO_Text.text = "Bravo ! " + (timeLevel-4f).ToString("0.0") + "s";
+					motos[i].Win_GO_Text.text = "Bravo ! " + (timeLevel*2f-4f).ToString("0.0") + "s";
 					alreadyWin = true;
 				}
 				else
 				{
 					motos[i].Loose_GO.SetActive(true);
-					motos[i].Loose_GO_Text.text = "Perdu ! " + (timeLevel-4f).ToString("0.0") + "s";
+					motos[i].Loose_GO_Text.text = "Perdu ! " + (timeLevel*2f-4f).ToString("0.0") + "s";
 				}
 			}
 //			
 		}
 	
-		if (timeLevel*0.5f < 4f)
+		if (timeLevel < 4f)
 		{
 			if (timeLevel < 3f)
 				maskCountdown.fillAmount = 1f-timeLevel%1f;
