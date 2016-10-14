@@ -248,7 +248,7 @@ public class Micro : MonoBehaviour {
 			if (secondHighest < highest && (shortSpectrum[secondHighest] / shortSpectrum[highest]) > 0.3f)
 				results = secondHighest;
 			
-			if (thirdHighest < secondHighest && (shortSpectrum[thirdHighest] / shortSpectrum[highest]) > 0.3f)
+			if (thirdHighest < secondHighest && thirdHighest < highest && (shortSpectrum[thirdHighest] / shortSpectrum[highest]) > 0.3f)
 				results = thirdHighest;
 		}
 		else
